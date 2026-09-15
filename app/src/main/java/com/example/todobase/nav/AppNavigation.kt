@@ -164,14 +164,14 @@ fun AppNavigation() {
                     HomeScreen(
                         onPlaceClick = { p ->
                             navController.navigate(
-                                "map?lat=${p.latitude}&lng=${p.longitude}"
+                                NavItem.Map.createRoute(p.latitude, p.longitude)
                             )
                         }
                     )
                 }
 
                 composable(
-                    route = "map?lat={lat}&lng={lng}",
+                    route = NavItem.Map.routeWithArgs,
                     arguments = listOf(
                         navArgument("lat") {
                             type = NavType.StringType
