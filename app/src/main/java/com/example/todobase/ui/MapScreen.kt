@@ -10,6 +10,13 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +28,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,9 +52,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -52,10 +64,12 @@ import com.example.todobase.data.models.FavoritePlace
 import com.example.todobase.data.repo.AuthRepo
 import com.example.todobase.data.repo.FavoriteRepo
 import com.example.todobase.data.services.MapSettingHelper
+import com.example.todobase.data.services.MapStyleOptions
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdate
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
@@ -67,11 +81,18 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.FillExtrusionLayer
+import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.sources.GeoJsonSource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng: Double? = null) {
+fun MapScreen(
+    modif: Modifier = Modifier,
+    targetLat: Double? = null,
+    targetLng: Double? = null,
+    onMapReady: ((MapLibreMap) -> Unit)? = null
+) {
     val favoriteRepo = FavoriteRepo()
     val context = LocalContext.current
     
@@ -85,7 +106,20 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
     var selectedPoint by remember { mutableStateOf<LatLng?>(null) }
     var placeName by remember { mutableStateOf("") }
     var placeDescription by remember { mutableStateOf("") }
-    
+
+    var isFabExpanded by remember { mutableStateOf(false) }
+    val fabRotation by animateFloatAsState(
+        targetValue = if (isFabExpanded) 45f else 0f,
+        label = "fab_rotation"
+    )
+
+    var isMeasuringDistance by remember { mutableStateOf(false) }
+    var placeA by remember { mutableStateOf<FavoritePlace?>(null) }
+    var placeB by remember { mutableStateOf<FavoritePlace?>(null) }
+    var distanceResult by remember { mutableStateOf("") }
+    var showDistanceDialog by remember { mutableStateOf(false) }
+
+    val selectedStyle = MapSettingHelper.getSelectedOption(context)
     var mapLibreMap by remember { 
         mutableStateOf<MapLibreMap?>(null) 
     }
@@ -194,6 +228,7 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
                 mapView.apply {
                     getMapAsync { map ->
                         mapLibreMap = map
+                        onMapReady?.invoke(map)
 
                         map.uiSettings.isTiltGesturesEnabled = true
                         map.uiSettings.isRotateGesturesEnabled = true
@@ -249,11 +284,13 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
                         }
 
                         map.addOnMapClickListener { point ->
-                            selectedPoint = point
-                            selectedPlace = null
-                            placeName = ""
-                            placeDescription = ""
-                            showDialog = true
+                            if (!isMeasuringDistance) {
+                                selectedPoint = point
+                                selectedPlace = null
+                                placeName = ""
+                                placeDescription = ""
+                                showDialog = true
+                            }
                             true
                         }
 
@@ -263,12 +300,39 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
                             }
 
                             if (place != null) {
-                                selectedPlace = place
-                                placeName = place.name
-                                placeDescription = place.description
-                                selectedPoint = LatLng(place.latitude, place.longitude)
+                                if (isMeasuringDistance) {
+                                    if (placeA == null) {
+                                        placeA = place
+                                        Toast.makeText(context, "Tempat pertama: ${place.name}. Pilih tempat kedua.", Toast.LENGTH_SHORT).show()
+                                    } else if (placeA?.uid == place.uid) {
+                                        Toast.makeText(context, "Pilih tempat yang berbeda sebagai titik kedua.", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        placeB = place
+                                        val firstPlace = placeA!!
+                                        val secondPlace = place
 
-                                showBottomSheet = true
+                                        val firstPoint = LatLng(firstPlace.latitude, firstPlace.longitude)
+                                        val secondPoint = LatLng(secondPlace.latitude, secondPlace.longitude)
+
+                                        gambarJarakGaris(map, firstPoint, secondPoint)
+                                        distanceResult = hitungJarak(
+                                            firstPlace.latitude,
+                                            firstPlace.longitude,
+                                            secondPlace.latitude,
+                                            secondPlace.longitude
+                                        )
+
+                                        showDistanceDialog = true
+                                        isMeasuringDistance = false
+                                    }
+                                } else {
+                                    selectedPlace = place
+                                    placeName = place.name
+                                    placeDescription = place.description
+                                    selectedPoint = LatLng(place.latitude, place.longitude)
+
+                                    showBottomSheet = true
+                                }
                             }
                             true
                         }
@@ -276,56 +340,184 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
                 }
             }
         )
-        
-        FloatingActionButton(
-            onClick = {
-                val next3D = !is3D
-                is3D = next3D
-                val targetTilt = if (next3D) 60.0 else 0.0
-                mapLibreMap?.animateCamera(
-                    CameraUpdateFactory.newCameraPosition(
-                        CameraPosition.Builder()
-                            .tilt(targetTilt)
-                            .build()
-                    ),
-                    800
-                )
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 88.dp),
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Text(if (is3D) "2D" else "3D", fontWeight = FontWeight.Bold)
-        }
 
-        FloatingActionButton(
-            onClick = {
-                if (userLocation == null) {
-                    Toast.makeText(context, "Lokasi belum tersedia", Toast.LENGTH_SHORT).show()
-                    return@FloatingActionButton
-                }
-                
-                userLocation?.let { 
-                    mapLibreMap?.animateCamera(
-                        CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.Builder()
-                                .zoom(16.0)
-                                .target(LatLng(it.latitude, it.longitude))
-                                .build()
-                        ),
-                        800
-                    )
-                    
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = Color.White
+        Column(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(Icons.Filled.LocationOn, "My Location", tint = Color.Red)
-        } 
+            AnimatedVisibility(
+                visible = isFabExpanded,
+                enter = fadeIn() + slideInVertically(initialOffsetY = {it/2}),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = {it/2})
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if(selectedStyle == MapStyleOptions.STREETS){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SmallFloatingActionButton(
+                                onClick = {
+                                    val next3D = !is3D
+                                    is3D = next3D
+                                    val targetTilt = if (next3D) 60.0 else 0.0
+                                    mapLibreMap?.animateCamera(
+                                        CameraUpdateFactory.newCameraPosition(
+                                            CameraPosition.Builder()
+                                                .tilt(targetTilt)
+                                                .build()
+                                        ),
+                                        800
+                                    )
+                                },
+                                containerColor = Color.White
+                            ) {
+                                Text(if (is3D) "2D" else "3D", fontWeight = FontWeight.Bold, color = Color.Black)
+                            }
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SmallFloatingActionButton(
+                            onClick = {
+                                if (favPlaces.size < 2) {
+                                    Toast.makeText(
+                                        context,
+                                        "Minimal butuh 2 tempat favorit untuk mengukur jarak",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    return@SmallFloatingActionButton
+                                }
+
+                                if (!isMeasuringDistance) {
+                                    placeA = null
+                                    placeB = null
+                                    isMeasuringDistance = true
+
+                                    Toast.makeText(
+                                        context,
+                                        "Klik marker tempat favorit pertama (A)",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    isMeasuringDistance = false
+                                    placeA = null
+                                    placeB = null
+                                    Toast.makeText(
+                                        context,
+                                        "Pengukuran dibatalkan",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            },
+                            containerColor = if (isMeasuringDistance) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                Color.White
+                            }
+                        ) {
+                            Icon(Icons.Default.Straighten, "Icon Ukur Jarak", tint = if (isMeasuringDistance) {
+                                Color.White
+                            } else {
+                                Color.Black
+                            }
+                            )
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SmallFloatingActionButton(
+                            onClick = {
+                                mapLibreMap?.animateCamera(
+                                    CameraUpdateFactory.zoomIn(),
+                                    300
+                                )
+                            },
+                            containerColor = Color.White
+                        ) {
+                            Text("+", fontWeight = FontWeight.Bold, color = Color.Black)
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SmallFloatingActionButton (
+                            onClick = {
+                                mapLibreMap?.animateCamera(
+                                    CameraUpdateFactory.zoomOut(),
+                                    300
+                                )
+                            },
+                            containerColor = Color.White
+                        ) {
+                            Text("-", fontWeight = FontWeight.Bold, color = Color.Black)
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SmallFloatingActionButton (
+                            onClick = {
+                                val loc = mapLibreMap?.locationComponent?.lastKnownLocation
+                                    ?: userLocation
+                                    ?: run {
+                                        val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+                                        try {
+                                            lm?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                                                ?: lm?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                                        } catch (e: SecurityException) {
+                                            null
+                                        }
+                                    }
+
+                                if (loc == null) {
+                                    Toast.makeText(context, "Lokasi belum tersedia", Toast.LENGTH_SHORT).show()
+                                    return@SmallFloatingActionButton
+                                }
+
+                                userLocation = loc
+                                mapLibreMap?.animateCamera(
+                                    CameraUpdateFactory.newCameraPosition(
+                                        CameraPosition.Builder()
+                                            .zoom(16.0)
+                                            .target(LatLng(loc.latitude, loc.longitude))
+                                            .build()
+                                    ),
+                                    800
+                                )
+                            },
+                            containerColor = Color.White
+                        ) {
+                            Icon(Icons.Filled.LocationOn, "My Location", tint = Color.Red)
+                        }
+                    }
+                }
+            }
+            FloatingActionButton(
+                onClick = {
+                    isFabExpanded = !isFabExpanded
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = if (isFabExpanded) "Tutup Menu" else "Buka Opsi Peta",
+                    modifier = Modifier.rotate(fabRotation)
+                )
+            }
+        }
     }
     
     if(showDialog){
@@ -377,6 +569,7 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
                                 onComplete = { success, message, savedPlace ->
                                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                                     if (success && savedPlace != null) {
+                                        favPlaces = favPlaces + savedPlace
                                         val marker = mapLibreMap?.addMarker(
                                             MarkerOptions()
                                                 .position(
@@ -404,7 +597,13 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
                                 ),
                                 onComplete = { success, message ->
                                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                
+                                    if (success) {
+                                        favoriteRepo.getFavoritePlaces { places, _ ->
+                                            if (places != null) {
+                                                favPlaces = places
+                                            }
+                                        }
+                                    }
                                     showDialog = false
                                 }
                             )
@@ -427,7 +626,9 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
             onDismissRequest = { showBottomSheet = false }
         ){
           Column(
-              modifier = modif.fillMaxWidth().padding(16.dp)
+              modifier = modif
+                  .fillMaxWidth()
+                  .padding(16.dp)
           ) { 
               Text(selectedPlace!!.name, style = MaterialTheme.typography.titleLarge)
               Text(selectedPlace!!.description, style = MaterialTheme.typography.bodyMedium)
@@ -488,6 +689,34 @@ fun MapScreen(modif: Modifier = Modifier,  targetLat: Double? = null, targetLng:
           }  
         }
     }
+
+    if(showDistanceDialog){
+        AlertDialog(
+            onDismissRequest = {
+                showDistanceDialog = false
+                isMeasuringDistance = false
+                placeA = null
+                placeB = null
+            },
+            title = {
+                Text("Jarak Antar Tempat Favorit")
+            },
+            text = {
+                Text("Jarak dari \"${placeA?.name}\" ke \"${placeB?.name}\" adalah $distanceResult")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDistanceDialog = false
+                        placeA = null
+                        placeB = null
+                    }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 fun hitungJarak(lat1: Double, lon1: Double, lat2: Double, lon2: Double): String {
@@ -500,6 +729,10 @@ fun hitungJarak(lat1: Double, lon1: Double, lat2: Double, lon2: Double): String 
         "${meter.toInt()} meter"
     }
 }
+
+
+
+
 
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
 @SuppressWarnings("Missing Permission")
@@ -532,5 +765,56 @@ private fun enableLocationComponent(
             ),
             1000
         )
+    }
+}
+
+fun gambarJarakGaris(map: MapLibreMap, pointA: LatLng, pointB: LatLng){
+    val sourceId = "distance-source"
+    val layerId = "distance-layer"
+
+    val geoJson = """
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [${pointA.longitude}, ${pointA.latitude}],
+                    [${pointB.longitude}, ${pointB.latitude}]
+                ]
+            },
+            "properties": {}
+        }
+    """.trimIndent()
+
+    val src = GeoJsonSource(sourceId, geoJson)
+
+    map.style?.let { style ->
+        if (style.getLayer(layerId) != null) {
+            style.removeLayer(layerId)
+        }
+
+        if (style.getSource(sourceId) != null) {
+            style.removeSource(sourceId)
+        }
+
+        style.addSource(src)
+        val lineLayer = LineLayer(layerId, sourceId).withProperties(
+            PropertyFactory.lineColor("#2196F3"),
+            PropertyFactory.lineWidth(4f)
+        )
+        style.addLayer(lineLayer)
+    }
+}
+
+fun hapusGarisJarak(map: MapLibreMap?) {
+    val sourceId = "distance-source"
+    val layerId = "distance-layer"
+    map?.style?.let { style ->
+        if (style.getLayer(layerId) != null) {
+            style.removeLayer(layerId)
+        }
+        if (style.getSource(sourceId) != null) {
+            style.removeSource(sourceId)
+        }
     }
 }

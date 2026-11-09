@@ -22,7 +22,7 @@ class FavoriteRepo {
         
         doc.set(newPlace)
             .addOnSuccessListener {
-                onComplete(true, "Favorite place added successfully", newPlace)
+                onComplete(true, "Tempat Favorit berhasil ditambahkan", newPlace)
             }
             .addOnFailureListener {
                 onComplete(false, "Failed to add favorite place", null)
@@ -58,7 +58,7 @@ class FavoriteRepo {
             .document(place.uid)
             .set(place)
             .addOnSuccessListener { 
-                onComplete(true, "Favorite place updated successfully")
+                onComplete(true, "Tempat Favorit berhasil di perbarui")
             }
             .addOnFailureListener {
                 onComplete(false, "Failed to update favorite place")
@@ -75,7 +75,7 @@ class FavoriteRepo {
             .document(placeId)
             .delete()
             .addOnSuccessListener { 
-                onComplete(true, "Favorite place deleted successfully")
+                onComplete(true, "Tempat Favorit berhasil dihapus")
             }
             .addOnFailureListener {
                 onComplete(false, "Failed to delete favorite place")

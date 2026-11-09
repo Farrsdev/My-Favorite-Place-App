@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MyFavPlace"
+rootProject.name = "favplace"
 include(":app")
- 
