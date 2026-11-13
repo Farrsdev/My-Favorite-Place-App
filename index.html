@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FavPlace - Interactive App Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    :root {
+      /* Android Material 3 Theme Colors */
+      --md-sys-color-primary: #6750A4;
+      --md-sys-color-on-primary: #FFFFFF;
+      --md-sys-color-primary-container: #EADDFF;
+      --md-sys-color-on-primary-container: #21005D;
+      --md-sys-color-surface: #FEF7FF;
+      --md-sys-color-on-surface: #1D1B20;
+      --md-sys-color-surface-variant: #E7E0EC;
+      --md-sys-color-on-surface-variant: #49454F;
+      --md-sys-color-outline: #79747E;
+      --md-sys-color-outline-variant: #CAC4D0;
+      --md-sys-color-error: #B3261E;
+      --md-sys-color-background: #FEF7FF;
+      --md-sys-color-secondary-container: #E8DEF8;
+      --md-sys-color-on-secondary-container: #1D192B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e1b4b 0%, #09090b 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .hero-header {
+      text-align: center;
+      margin-bottom: 24px;
+      max-width: 600px;
+    }
+
+    .hero-header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #c084fc, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .hero-header p {
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    /* Phone Shell */
+    .device-wrapper {
+      position: relative;
+      width: 380px;
+      height: 780px;
+      background: #111;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 
+        0 0 0 4px #2e2e38,
+        0 25px 60px -15px rgba(0, 0, 0, 0.9),
+        0 0 50px rgba(129, 140, 248, 0.15);
+    }
+
+    /* Notch camera punch-hole */
+    .device-notch {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      background: #000;
+      border-radius: 50%;
+      z-index: 100;
+      border: 2px solid #1a1a1a;
+    }
+
+    .device-speaker {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 3px;
+      background: #262626;
+      border-radius: 4px;
+      z-index: 100;
+    }
+
+    /* Screen inside phone */
+    .device-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--md-sys-color-background);
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    /* Android Status Bar */
+    .android-status-bar {
+      height: 36px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--md-sys-color-on-surface);
+      z-index: 90;
+      background: var(--md-sys-color-surface);
+      flex-shrink: 0;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 19px;
+      vertical-align: middle;
+    }
+
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1;
+    }
+
+    /* Android Material 3 TopAppBar */
+    .top-app-bar {
+      height: 64px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--md-sys-color-surface);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .top-app-bar .title {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--md-sys-color-on-surface);
+      transition: background 0.2s;
+    }
+    .icon-btn:hover {
+      background: rgba(0,0,0,0.06);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
+      position: absolute;
+      top: 52px;
+      right: 16px;
+      background: #FFFFFF;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      border-radius: 8px;
+      min-width: 140px;
+      display: none;
+      flex-direction: column;
+      z-index: 110;
+      overflow: hidden;
+      border: 1px solid var(--md-sys-color-outline-variant);
+    }
+    .dropdown-menu.show {
+      display: flex;
+    }
+    .dropdown-item {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: var(--md-sys-color-on-surface);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dropdown-item:hover {
+      background: var(--md-sys-color-surface-variant);
+    }
+
+    /* App Screen Contents (Scrollable Container) */
+    .screen-content {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+      position: relative;
+    }
+    .screen-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HOME SCREEN UI (1:1 with HomeScreen.kt) */
+    .home-container {
+      padding: 16px;
+      flex: 1;
+    }
+
+    .welcome-card {
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .welcome-card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .welcome-card p {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      line-height: 1.4;
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .place-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* CardFavorite (1:1 with CardFavorite composable) */
+    .favorite-card {
+      background: var(--md-sys-color-surface-variant);
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .favorite-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .place-name {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .del-btn {
+      color: var(--md-sys-color-error);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 50%;
+    }
+    .del-btn:hover {
+      background: rgba(179, 38, 30, 0.1);
+    }
+
+    .place-desc {
+      font-size: 0.82rem;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .place-coords {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--md-sys-color-outline);
+    }
+
+    .place-coords .material-symbols-outlined {
+      color: var(--md-sys-color-primary);
+      font-size: 16px;
+    }
+
+    /* MAP SCREEN UI (1:1 with MapScreen.kt) */
+    .map-container {
+      flex: 1;
+      position: relative;
+      background: #e5e3df url('https://tile.openstreetmap.org/13/4193/2747.png') center/cover;
+    }
+
+    .map-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 60% 40%, rgba(255,255,255,0.2) 0%, rgba(200,210,230,0.4) 100%);
+      pointer-events: none;
+    }
+
+    .map-pin {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      color: #dc2626;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .map-pin .material-symbols-outlined {
+      font-size: 38px;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+    }
+    .pin-label {
+      background: white;
+      color: #111;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      margin-top: -6px;
+    }
+
+    /* Floating Action Buttons */
+    .fab-container {
+      position: absolute;
+      right: 16px;
+      bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .fab:hover {
+      transform: scale(1.05);
+    }
+    .fab-small {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+    }
+
+    /* PROFILE SCREEN UI (1:1 with ProfileScreen.kt) */
+    .profile-container {
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--md-sys-color-primary);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(103, 80, 164, 0.2);
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-card {
+      width: 100%;
+      background: var(--md-sys-color-surface-variant);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .profile-row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 12px;
+    }
+    .profile-label {
+      font-size: 0.75rem;
+      color: var(--md-sys-color-outline);
+      font-weight: 500;
+    }
+    .profile-val {
+      font-size: 0.95rem;
+      color: var(--md-sys-color-on-surface);
+      font-weight: 500;
+    }
+
+    /* CARD SCREEN UI (1:1 with CardScreen.kt) */
+    .card-screen-container {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .id-card {
+      width: 100%;
+      background: linear-gradient(135deg, #6750A4 0%, #381E72 100%);
+      color: white;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 8px 20px rgba(103, 80, 164, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .id-card::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      bottom: -30px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .id-card-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      opacity: 0.8;
+      margin-bottom: 16px;
+    }
+    .id-card-body {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .id-card-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: 2px solid white;
+      object-fit: cover;
+    }
+    .id-card-info h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .id-card-info p {
+      font-size: 0.8rem;
+      opacity: 0.85;
+    }
+
+    /* Android Material 3 NavigationBar (1:1 with AppNavigation.kt) */
+    .navigation-bar {
+      height: 72px;
+      background: #F3EDF7;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+      flex-shrink: 0;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--md-sys-color-on-surface-variant);
+      cursor: pointer;
+      gap: 4px;
+      flex: 1;
+      padding: 8px 0;
+    }
+
+    .nav-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 30px;
+      border-radius: 16px;
+      transition: background-color 0.2s;
+    }
+
+    .nav-item.active .nav-pill {
+      background: var(--md-sys-color-secondary-container);
+    }
+
+    .nav-item.active {
+      color: var(--md-sys-color-on-secondary-container);
+      font-weight: 700;
+    }
+
+    .nav-item.active .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1;
+      color: var(--md-sys-color-on-secondary-container);
+    }
+
+    .nav-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+
+    /* Android Gesture Nav bar (bottom pill) */
+    .android-nav-handle {
+      height: 18px;
+      background: #F3EDF7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .handle-bar {
+      width: 100px;
+      height: 4px;
+      background: #111;
+      border-radius: 3px;
+      opacity: 0.5;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: absolute;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #313033;
+      color: #F4EFF4;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      z-index: 120;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Dialog Modal (1:1 with AlertDialog) */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 150;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .m3-dialog {
+      background: #EEE8F4;
+      border-radius: 24px;
+      padding: 24px;
+      width: 100%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .dialog-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--md-sys-color-on-surface);
+      margin-bottom: 12px;
+    }
+    .dialog-body {
+      font-size: 0.85rem;
+      color: var(--md-sys-color-on-surface-variant);
+      margin-bottom: 20px;
+    }
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .m3-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .m3-btn-text {
+      background: transparent;
+      color: var(--md-sys-color-primary);
+    }
+    .m3-btn-filled {
+      background: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+    }
+
+    .footer-desc {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero-header">
+    <h1>📱 FavPlace - Android App Preview</h1>
+    <p>Simulasi interaktif 1:1 dari aplikasi Android Jetpack Compose <b>FavPlace</b>. Coba klik menu tab di bawah layar HP!</p>
+  </div>
+
+  <!-- Android Phone Mockup Frame -->
+  <div class="device-wrapper">
+    <div class="device-speaker"></div>
+    <div class="device-notch"></div>
+
+    <div class="device-screen">
+      <!-- 1. Android Status Bar -->
+      <div class="android-status-bar">
+        <span id="live-time">12:30</span>
+        <div class="status-icons">
+          <span class="material-symbols-outlined" style="font-size: 16px;">wifi</span>
+          <span class="material-symbols-outlined" style="font-size: 16px;">signal_cellular_4_bar</span>
+          <span class="material-symbols-outlined" style="font-size: 17px;">battery_full</span>
+        </div>
+      </div>
+
+      <!-- 2. Material 3 TopAppBar -->
+      <div class="top-app-bar">
+        <div class="title" id="appbar-title">Welcome, Farrs</div>
+        <button class="icon-btn" onclick="toggleMenu()" title="Menu Opsi">
+          <span class="material-symbols-outlined">more_vert</span>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-item" id="menuClearLine" style="display: none;" onclick="clearLines()">
+            <span class="material-symbols-outlined">straighten</span>
+            <span>Hapus Garis</span>
+          </div>
+          <div class="dropdown-item" onclick="showToast('Berhasil Logout')">
+            <span class="material-symbols-outlined">logout</span>
+            <span>Logout</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Screen Contents -->
+
+      <!-- TAB 1: HOME SCREEN (1:1 with HomeScreen.kt) -->
+      <div class="screen-content active" id="tab-home">
+        <div class="home-container">
+          <div class="welcome-card">
+            <h2>Selamat Datang, Farrs! 👋</h2>
+            <p>Jelajahi dan kelola tempat-tempat favorit pilihanmu di peta.</p>
+          </div>
+
+          <div class="section-title">Daftar Tempat Favorit</div>
+
+          <div class="place-list" id="placeList">
+            <!-- Card 1 -->
+            <div class="favorite-card" onclick="goToPlace(-6.2088, 106.8456, 'Monas Jakarta')">
+              <div class="card-top">
+                <span class="place-name">Monumen Nasional (Monas)</span>
+                <button class="del-btn" onclick="event.stopPropagation(); promptDelete('Monas')">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+              <div class="place-desc">Monumen peringatan setinggi 132 meter di Jakarta Pusat.</div>
+              <div class="place-coords">
+                <span class="material-symbols-outlined">location_on</span>
+                <span>(-6.1754, 106.8272)</span>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="favorite-card" onclick="goToPlace(-6.9175, 107.6191, 'Gedung Sate Bandung')">
+              <div class="card-top">
+                <span class="place-name">Gedung Sate Bandung</span>
+                <button class="del-btn" onclick="event.stopPropagation(); promptDelete('Gedung Sate')">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+              <div class="place-desc">Ikon bersejarah arsitektur khas Jawa Barat di Kota Bandung.</div>
+              <div class="place-coords">
+                <span class="material-symbols-outlined">location_on</span>
+                <span>(-6.9025, 107.6186)</span>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="favorite-card" onclick="goToPlace(-7.7956, 110.3695, 'Malioboro Jogja')">
+              <div class="card-top">
+                <span class="place-name">Jalan Malioboro</span>
+                <button class="del-btn" onclick="event.stopPropagation(); promptDelete('Malioboro')">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+              <div class="place-desc">Pusat wisata kuliner, belanja, dan budaya Yogyakarta.</div>
+              <div class="place-coords">
+                <span class="material-symbols-outlined">location_on</span>
+                <span>(-7.7928, 110.3658)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: MAP SCREEN (1:1 with MapScreen.kt) -->
+      <div class="screen-content" id="tab-map">
+        <div class="map-container">
+          <div class="map-overlay"></div>
+          
+          <!-- Map Marker Pin -->
+          <div class="map-pin" onclick="showToast('Monas: -6.1754, 106.8272')">
+            <span class="material-symbols-outlined fill">location_on</span>
+            <span class="pin-label">Monas</span>
+          </div>
+
+          <!-- Floating Action Buttons -->
+          <div class="fab-container">
+            <button class="fab fab-small" title="Ukur Jarak" onclick="showToast('Mode pengukuran jarak aktif')">
+              <span class="material-symbols-outlined">straighten</span>
+            </button>
+            <button class="fab fab-small" title="Lokasi Saya" onclick="showToast('Mencari lokasi GPS...')">
+              <span class="material-symbols-outlined">my_location</span>
+            </button>
+            <button class="fab" title="Tambah Tempat" onclick="showToast('Buka BottomSheet Tambah Tempat')">
+              <span class="material-symbols-outlined">add</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: PROFILE SCREEN (1:1 with ProfileScreen.kt) -->
+      <div class="screen-content" id="tab-profile">
+        <div class="profile-container">
+          <div class="avatar-wrapper">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQUtETIJ5-DSRhtAWKaiPYWd4523Fz6BuXDEivAvZwog&s=10" alt="Avatar" class="avatar-img" />
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-row">
+              <span class="profile-label">Nama Lengkap</span>
+              <span class="profile-val">Farrs Developer</span>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Username</span>
+              <span class="profile-val">@farrsdev</span>
+            </div>
+            <div class="profile-row">
+              <span class="profile-label">Email Akun</span>
+              <span class="profile-val">farrs@example.com</span>
+            </div>
+            <div class="profile-row" style="margin-bottom: 0;">
+              <span class="profile-label">Total Tempat Disimpan</span>
+              <span class="profile-val">3 Lokasi Favorit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: CARD SCREEN (1:1 with CardScreen.kt) -->
+      <div class="screen-content" id="tab-kartu">
+        <div class="card-screen-container">
+          <div class="id-card">
+            <div class="id-card-title">FavPlace Member Card</div>
+            <div class="id-card-body">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="Profile" class="id-card-avatar" />
+              <div class="id-card-info">
+                <h3>Farrs Developer</h3>
+                <p>Status: Explorer</p>
+                <p style="font-size: 0.72rem; opacity: 0.6; margin-top: 4px;">ID: FP-2026-9941</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Material 3 Bottom NavigationBar -->
+      <div class="navigation-bar">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+          <div class="nav-pill">
+            <span class="material-symbols-outlined">home</span>
+          </div>
+          <span class="nav-label">Home</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('map', this)">
+          <div class="nav-pill">
+            <span class="material-symbols-outlined">location_on</span>
+          </div>
+          <span class="nav-label">Map</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('profile', this)">
+          <div class="nav-pill">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+          <span class="nav-label">Profile</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('kartu', this)">
+          <div class="nav-pill">
+            <span class="material-symbols-outlined">credit_card</span>
+          </div>
+          <span class="nav-label">Kartu</span>
+        </div>
+      </div>
+
+      <!-- 5. Android Bottom Navigation Handle -->
+      <div class="android-nav-handle">
+        <div class="handle-bar"></div>
+      </div>
+
+      <!-- Toast Alert Element -->
+      <div class="toast" id="toast">Notifikasi</div>
+
+      <!-- Delete Confirmation Dialog (AlertDialog) -->
+      <div class="modal-backdrop" id="deleteModal">
+        <div class="m3-dialog">
+          <div class="dialog-title">Hapus Tempat?</div>
+          <div class="dialog-body">Yakin ingin menghapus tempat ini dari daftar favorit?</div>
+          <div class="dialog-actions">
+            <button class="m3-btn m3-btn-text" onclick="closeDeleteModal()">Batal</button>
+            <button class="m3-btn m3-btn-filled" onclick="confirmDelete()">Hapus</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-desc">
+    GitHub: <a href="https://github.com/Farrsdev/My-Favorite-Place-App" target="_blank" style="color: #818cf8; text-decoration: none;">Farrsdev/My-Favorite-Place-App</a>
+  </div>
+
+  <script>
+    // Update Jam Realtime di Status Bar
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('live-time').innerText = `${hours}:${minutes}`;
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    // Switch Bottom Tabs
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.screen-content').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.classList.add('active');
+      if (el) el.classList.add('active');
+
+      // Tampilkan menu khusus map jika di tab Map
+      const menuClearLine = document.getElementById('menuClearLine');
+      if (tabId === 'map') {
+        menuClearLine.style.display = 'flex';
+      } else {
+        menuClearLine.style.display = 'none';
+      }
+
+      closeMenu();
+    }
+
+    // Dropdown Menu Toggle
+    function toggleMenu() {
+      const menu = document.getElementById('dropdownMenu');
+      menu.classList.toggle('show');
+    }
+
+    function closeMenu() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    }
+
+    window.addEventListener('click', function(e) {
+      if (!e.target.closest('.top-app-bar')) {
+        closeMenu();
+      }
+    });
+
+    // Toast Message
+    let toastTimeout;
+    function showToast(msg) {
+      closeMenu();
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    function clearLines() {
+      showToast('Garis pengukuran berhasil dihapus');
+    }
+
+    // Go to map on item click
+    function goToPlace(lat, lng, name) {
+      const mapTabBtn = document.querySelectorAll('.nav-item')[1];
+      switchTab('map', mapTabBtn);
+      showToast(`Menuju ke ${name}`);
+    }
+
+    // Delete dialog handlers
+    let targetPlaceElement = null;
+    function promptDelete(placeName) {
+      document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('show');
+    }
+
+    function confirmDelete() {
+      closeDeleteModal();
+      showToast('Tempat berhasil dihapus');
+    }
+  </script>
+</body>
+</html>
