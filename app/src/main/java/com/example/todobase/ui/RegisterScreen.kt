@@ -78,8 +78,10 @@ fun RegisterScreen(modifier: Modifier = Modifier, onGoToLogin: () -> Unit, onReg
 
         OutlinedTextField(
             value = username,
-            onValueChange = { username = it },
-            label = { Text("Email") },
+            onValueChange = { input ->
+                username = input.filter { it.isLetterOrDigit() || it == '_' || it == '.' }
+            },
+            label = { Text("Username") },
             placeholder = { Text("Contoh: budi_santoso") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()

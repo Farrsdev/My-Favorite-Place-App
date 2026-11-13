@@ -36,6 +36,7 @@ class AuthRepo(
         onComplete: (Boolean, String) -> Unit
     ) {
         val cleanUsername = username.trim()
+        val virtualEmail = usernameToEmail(cleanUsername)
 
         fs.collection("users")
             .whereEqualTo("username", cleanUsername)
@@ -46,7 +47,7 @@ class AuthRepo(
                     return@addOnCompleteListener
                 }
 
-                auth.createUserWithEmailAndPassword(username, password)
+                auth.createUserWithEmailAndPassword(virtualEmail, password)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             val uid = auth.currentUser?.uid ?: ""
@@ -74,7 +75,8 @@ class AuthRepo(
     }
     
     fun login(username: String, password: String, onComplete: (Boolean, String) -> Unit) {
-        auth.signInWithEmailAndPassword(username, password).addOnCompleteListener { task ->
+        val virtualEmail = usernameToEmail(username)
+        auth.signInWithEmailAndPassword(virtualEmail, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 onComplete(true, "Login berhasil")
             } else {

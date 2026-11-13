@@ -69,8 +69,8 @@ fun LoginScreen(modifier: Modifier = Modifier, onGoToRegister: () -> Unit, onLog
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Email") },
-            placeholder = { Text("Masukkan email") },
+            label = { Text("Username") },
+            placeholder = { Text("Masukkan username") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )

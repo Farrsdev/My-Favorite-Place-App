@@ -212,7 +212,7 @@ fun MapScreen(
         mapView.onStart()
         mapView.onResume()
         
-        onDispose { 
+            onDispose {
             mapView.onPause()
             mapView.onStop()
             mapView.onDestroy()
@@ -345,7 +345,8 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        )
+        {
             AnimatedVisibility(
                 visible = isFabExpanded,
                 enter = fadeIn() + slideInVertically(initialOffsetY = {it/2}),
@@ -506,6 +507,7 @@ fun MapScreen(
                     }
                 }
             }
+
             FloatingActionButton(
                 onClick = {
                     isFabExpanded = !isFabExpanded
